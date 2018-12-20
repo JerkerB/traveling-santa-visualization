@@ -16,34 +16,64 @@
   <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
     <script>
+      var EARTH_RADIUS = 67.38;
+
       var scene = new THREE.Scene();
-      var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
       var renderer = new THREE.WebGLRenderer();
+      camera.up.set(0, 0, 1);
+
+      var axesHelper = new THREE.AxesHelper(100);
+      scene.add(axesHelper);
 
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      var sphereRadius = 67.38;
-      var sphereSegments = 50;
-      var spehereRings = 30;
+      var earthMesh = getEarthMesh();
+      var korvatunturiMesh = getCoordinateMesh(2, 2, 2, 0xff0000, 68.073611, 29.315278);
 
-      var geometry = new THREE.SphereGeometry(sphereRadius, sphereSegments, spehereRings);
-      var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
-      var sphere = new THREE.Mesh(geometry, material);
-      scene.add(sphere);
+      var group = new THREE.Group();
+      group.add(earthMesh);
+      group.add(korvatunturiMesh);
 
-      camera.position.z = 150;
+      scene.add(group);
 
+      camera.position.z = 300;
+      var rotation = 0.01;
       function render() {
         requestAnimationFrame(render);
-
-        sphere.rotation.x += 0.01;
-        sphere.rotation.y += 0.01;
-
+        group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), 0.01);
         renderer.render(scene, camera);
       }
 
       render();
+
+      function LLAtoECEF(radius, latitude, longitude, alt) {
+        var flattening = 0;
+        var latitudeAtMeanSeaLevel = Math.atan(Math.pow(1 - flattening, 2) * Math.tan(latitude));
+
+        var x = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.cos(longitude) + alt * Math.cos(latitude) * Math.cos(longitude);
+        var y = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.sin(longitude) + alt * Math.cos(latitude) * Math.sin(longitude);
+        var z = radius * Math.sin(latitudeAtMeanSeaLevel) + alt * Math.sin(latitude);
+        return new THREE.Vector3(-x, -z, -y);
+      }
+
+      function getEarthMesh() {
+        var segments = 30;
+        var rings = 30;
+        var geometry = new THREE.SphereGeometry(EARTH_RADIUS, segments, rings);
+        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        return new THREE.Mesh(geometry, material);
+      }
+
+      function getCoordinateMesh(width, height, depth, color, latitude, longitude) {
+        var geometry = new THREE.BoxGeometry(width, height, depth);
+        var material = new THREE.MeshBasicMaterial({ color: color });
+        var coordinateMesh = new THREE.Mesh(geometry, material);
+        var pos = LLAtoECEF(EARTH_RADIUS, latitude, longitude, 0);
+        coordinateMesh.position.set(pos.x, pos.y, pos.z);
+        return coordinateMesh;
+      }
     </script>
   </body>
 </html>
