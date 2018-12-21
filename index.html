@@ -35,6 +35,7 @@
       group.add(earthMesh, korvatunturiMesh);
       getGifstFromNiceList().then(gifts => {
         mesh = createGiftMesh(gifts);
+        mesh.name = 'gifts';
         group.add(mesh);
       });
       scene.add(group);
@@ -46,8 +47,16 @@
 
       function render() {
         requestAnimationFrame(render);
-        group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.01);
+        group.rotateOnWorldAxis(new THREE.Vector3(1, 1, 0), 0.01);
         renderer.render(scene, camera);
+      }
+
+      function deliverPresent(giftIndex) {
+        var giftColorAttribute = group.getObjectByName('gifts').geometry.attributes.color;
+        giftColorAttribute.array[giftIndex * 3] = 0;
+        giftColorAttribute.array[giftIndex * 3 + 1] = 0;
+        giftColorAttribute.array[giftIndex * 3 + 2] = 0;
+        giftColorAttribute.needsUpdate;
       }
 
       function LLAtoECEF(radius, latitude, longitude, alt) {
@@ -71,7 +80,7 @@
       }
 
       function createKorvatunturiMesh() {
-        return createPointMeshFromCoordinate(30, 0xff0000, 68.073611, 29.315278);
+        return createPointMeshFromCoordinate(30, 0x0000ff, 68.073611, 29.315278);
       }
 
       function createCubeMeshFromCoordinate(width, height, depth, color, latitude, longitude) {
@@ -113,15 +122,21 @@
       function createGiftMesh(gifts) {
         var geometry = new THREE.BufferGeometry();
         var vertices = new Float32Array(gifts.length * 3);
+        var colors = new Float32Array(gifts.length * 3);
+        var color = new THREE.Color(0xff0000);
         gifts.forEach((gift, giftIndex) => {
           var pos = LLAtoECEF(EARTH_RADIUS, gift.lat, gift.lon, 0);
           verticeIndex = giftIndex * 3;
           vertices[verticeIndex] = pos.x;
           vertices[verticeIndex + 1] = pos.y;
           vertices[verticeIndex + 2] = pos.z;
+          colors[verticeIndex] = color.r;
+          colors[verticeIndex + 1] = color.g;
+          colors[verticeIndex + 2] = color.b;
         });
         geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
-        var material = new THREE.PointsMaterial({ size: 2, color: 0x000000 });
+        geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
+        var material = new THREE.PointsMaterial({ size: 2, vertexColors: THREE.VertexColors });
         return new THREE.Points(geometry, material);
       }
     </script>
