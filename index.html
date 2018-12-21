@@ -29,50 +29,96 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      var earthMesh = getEarthMesh();
-      var korvatunturiMesh = getCoordinateMesh(2, 2, 2, 0xff0000, 68.073611, 29.315278);
-
       var group = new THREE.Group();
-      group.add(earthMesh);
-      group.add(korvatunturiMesh);
-
+      var earthMesh = createEarthMesh();
+      var korvatunturiMesh = createKorvatunturiMesh();
+      group.add(earthMesh, korvatunturiMesh);
+      getGifstFromNiceList().then(gifts => {
+        mesh = createGiftMesh(gifts);
+        group.add(mesh);
+      });
       scene.add(group);
 
       camera.position.z = 300;
-      var rotation = 0.01;
+      render();
+
+      var rotation = 0.1;
       function render() {
         requestAnimationFrame(render);
         group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), 0.01);
         renderer.render(scene, camera);
       }
 
-      render();
-
       function LLAtoECEF(radius, latitude, longitude, alt) {
         var flattening = 0;
         var latitudeAtMeanSeaLevel = Math.atan(Math.pow(1 - flattening, 2) * Math.tan(latitude));
-
         var x = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.cos(longitude) + alt * Math.cos(latitude) * Math.cos(longitude);
         var y = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.sin(longitude) + alt * Math.cos(latitude) * Math.sin(longitude);
         var z = radius * Math.sin(latitudeAtMeanSeaLevel) + alt * Math.sin(latitude);
         return new THREE.Vector3(-x, -z, -y);
       }
 
-      function getEarthMesh() {
+      function createEarthMesh() {
         var segments = 30;
         var rings = 30;
         var geometry = new THREE.SphereGeometry(EARTH_RADIUS, segments, rings);
-        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        var material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: false });
         return new THREE.Mesh(geometry, material);
       }
 
-      function getCoordinateMesh(width, height, depth, color, latitude, longitude) {
+      function createKorvatunturiMesh() {
+        return createPointMeshFromCoordinate(30, 0xff0000, 68.073611, 29.315278);
+      }
+
+      function createCubeMeshFromCoordinate(width, height, depth, color, latitude, longitude) {
         var geometry = new THREE.BoxGeometry(width, height, depth);
         var material = new THREE.MeshBasicMaterial({ color: color });
         var coordinateMesh = new THREE.Mesh(geometry, material);
         var pos = LLAtoECEF(EARTH_RADIUS, latitude, longitude, 0);
         coordinateMesh.position.set(pos.x, pos.y, pos.z);
         return coordinateMesh;
+      }
+
+      function createPointMeshFromCoordinate(size, color, latitude, longitude) {
+        var geometry = new THREE.Geometry();
+        geometry.vertices.push(new THREE.Vector3());
+        var material = new THREE.PointsMaterial({ size: size, sizeAttenuation: false, color: color });
+        var coordinateMesh = new THREE.Points(geometry, material);
+        var pos = LLAtoECEF(EARTH_RADIUS, latitude, longitude, 0);
+        coordinateMesh.position.set(pos.x, pos.y, pos.z);
+        return coordinateMesh;
+      }
+
+      function readFile(pathToFile) {
+        return fetch(pathToFile)
+          .then(response => response.text())
+          .then(text => {
+            return text;
+          });
+      }
+
+      async function getGifstFromNiceList() {
+        var text = await readFile('nicelist.txt');
+        var gifts = text.split('\n').map(x => {
+          var props = x.split(';');
+          return { id: props[0], lat: props[1], lon: props[2], weight: props[3] };
+        });
+        return gifts;
+      }
+
+      function createGiftMesh(gifts) {
+        var geometry = new THREE.BufferGeometry();
+        var vertices = new Float32Array(gifts.length * 3);
+        gifts.forEach((gift, giftIndex) => {
+          var pos = LLAtoECEF(EARTH_RADIUS, gift.lat, gift.lon, 0);
+          verticeIndex = giftIndex * 3;
+          vertices[verticeIndex] = pos.x;
+          vertices[verticeIndex + 1] = pos.y;
+          vertices[verticeIndex + 2] = pos.z;
+        });
+        geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        var material = new THREE.PointsMaterial({ size: 3, color: 0x0000ff });
+        return new THREE.Points(geometry, material);
       }
     </script>
   </body>
