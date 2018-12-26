@@ -60,7 +60,7 @@
     <div class="flex-container">
       <div class="controls">
         <h2>Controls</h2>
-        <div id="drop-box"><h3>Drag your file here</h3></div>
+        <div id="drop-box"><h3 id="drop-box-text">Drop your file here...</h3></div>
         <div class="control-inputs"></div>
         <button id="run-btn">Run</button>
       </div>
@@ -84,6 +84,7 @@
         e.stopPropagation();
         e.preventDefault();
         const file = getFileFromEvent(e);
+        document.getElementById('drop-box-text').innerHTML = file.name;
         gitfts = loadGiftsFromFile(file);
         removeDragData(e);
       }
