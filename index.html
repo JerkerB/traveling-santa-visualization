@@ -25,8 +25,10 @@
         flex-wrap: wrap;
       }
       .controls {
-        text-align: center;
         flex: 1;
+        display: flex;
+        flex-direction: column;
+        text-align: center; 
         color: #89538a;
       }
       #visualization {
@@ -37,32 +39,55 @@
         justify-content: center;
         align-items: center;
         margin: 10px;
-        height: 50%;
+        height: 200px;
         border-width: 5px;
         border-style: dashed;
       }
-      #run-btn {
+      .btn-container {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px;
+      }
+      .btn {
+        margin: 10px;
         background-color: #89538a;
         color: #d9d0dd;
         border: none;
         outline: none;
         cursor: pointer;
-        height: 45px;
+        height:45px;
         padding: 15px 30px;
         font-weight: bold;
-        letter-spacing: 1px;
+        border-radius: 5px;
+      }
+      .deliver-time-container {
+        height:50px;
+      }
+      #deliver-time-input {
+        border: none;
+        outline: none;
+        color: #89538a;
+        font-weight: bold;
+        width: 50px;
+        padding: 15px 15px;
         border-radius: 5px;
       }
     </style>
   </head>
   <body>
-    <div class="header"><h1>Traveling santa challenge visualization</h1></div>
+    <div class="header"><h1>Traveling santa - visualization</h1></div>
     <div class="flex-container">
       <div class="controls">
         <h2>Controls</h2>
-        <div id="drop-box"><h3 id="drop-box-text">Drop your file here...</h3></div>
+        <div id="drop-box"><h3 id="drop-box-text">Drag and drop your file here...</h3></div>
         <div class="control-inputs"></div>
-        <button id="run-btn">Run</button>
+        <div class="deliver-time-container">
+        <label for="deliver-time-input">Deliver time in ms/gift</label> <input type="text" id="deliver-time-input"></input>
+      </div>
+        <div class="btn-container">
+          <button class="btn" id="deliver-btn">Deliver</button>
+          <button class="btn" id="reset-btn">Reset</button>
+      </div>
       </div>
       <div id="visualization"></div>
     </div>
@@ -71,9 +96,12 @@
       var dropBoxEl = document.getElementById('drop-box');
       dropBoxEl.addEventListener('drop', dropHandler);
       dropBoxEl.addEventListener('dragover', dragOverHandler);
-      var runBtnEl = document.getElementById('run-btn');
+      var runBtnEl = document.getElementById('deliver-btn');
       runBtnEl.addEventListener('click', runVisualization);
-      var gifts = [];
+      var resetBtnEl = document.getElementById('reset-btn');
+      resetBtnEl.addEventListener('click', reset);
+      var giftTimeouts = [];
+      var giftsFromFile = [];
 
       function dragOverHandler(e) {
         e.stopPropagation();
@@ -83,9 +111,9 @@
       function dropHandler(e) {
         e.stopPropagation();
         e.preventDefault();
-        const file = getFileFromEvent(e);
+        var file = getFileFromEvent(e);
         document.getElementById('drop-box-text').innerHTML = file.name;
-        gitfts = loadGiftsFromFile(file);
+        giftsFromFile = loadGiftsFromFile(file);
         removeDragData(e);
       }
 
@@ -104,19 +132,31 @@
         }
       }
       function loadGiftsFromFile(file) {
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = e => {
           var text = e.target.result.trim();
-          gifts = text.replace(/\r?\n|\r/g, '').split(';');
+          giftsFromFile = text.replace(/\r?\n|\r/g, '').split(';');
         };
         reader.readAsText(file);
       }
 
       function runVisualization() {
-        gifts.forEach((gift, index) => {
-          setTimeout(() => {
+        var timePerGift = document.getElementById('deliver-time-input').value;
+        giftsFromFile.forEach((gift, index) => {
+         giftTimeouts.push(setTimeout(() => {
             deliverGift(parseInt(gift));
-          }, 1000 * index);
+          }, timePerGift * index));
+        });
+      }
+
+      function reset() {
+        clearGiftTimeouts();
+        resetGiftColors();
+      }
+
+      function clearGiftTimeouts(){
+        giftTimeouts.forEach(timeout => {
+          clearTimeout(timeout);
         });
       }
     </script>
@@ -132,12 +172,14 @@
       scene.add(axesHelper);
       renderer.setSize(visualizationWidth, window.innerHeight);
       document.getElementById('visualization').appendChild(renderer.domElement);
+      var giftsFromNiceList = [];
 
       var group = new THREE.Group();
       var earthMesh = createEarthMesh();
       var korvatunturiMesh = createKorvatunturiMesh();
       group.add(earthMesh, korvatunturiMesh);
       getGifstFromNiceList().then(gifts => {
+        giftsFromNiceList = gifts;
         mesh = createGiftMesh(gifts);
         group.add(mesh);
       });
@@ -160,6 +202,16 @@
 
         var colorAttribute = attributes.color;
         setColorForGift(colorAttribute.array, giftIndex, new THREE.Color(0xffffff));
+        colorAttribute.needsUpdate = true;
+      }
+
+      function resetGiftColors() {
+        var attributes = group.getObjectByName('gifts').geometry.attributes;
+        var colorAttribute = attributes.color;
+        var color = new THREE.Color(0xff0000);
+        giftsFromNiceList.forEach((gift, index) => {
+          setColorForGift(colorAttribute.array, index, color);
+        });
         colorAttribute.needsUpdate = true;
       }
 
