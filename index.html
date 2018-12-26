@@ -33,7 +33,6 @@
       group.add(earthMesh, korvatunturiMesh);
       getGifstFromNiceList().then(gifts => {
         mesh = createGiftMesh(gifts);
-        mesh.name = 'gifts';
         group.add(mesh);
       });
       scene.add(group);
@@ -49,12 +48,19 @@
         renderer.render(scene, camera);
       }
 
-      function deliverPresent(giftIndex) {
-        var giftColorAttribute = group.getObjectByName('gifts').geometry.attributes.color;
-        giftColorAttribute.array[giftIndex * 3] = 0;
-        giftColorAttribute.array[giftIndex * 3 + 1] = 0;
-        giftColorAttribute.array[giftIndex * 3 + 2] = 0;
-        giftColorAttribute.needsUpdate;
+      function deliverGift(giftId) {
+        var attributes = group.getObjectByName('gifts').geometry.attributes;
+        var giftIndex = findGiftIndex(attributes.id.array);
+
+        var colorAttribute = attributes.color;
+        setColorForGift(colorAttribute.array, giftIndex, new THREE.Color(0xffffff));
+        colorAttribute.needsUpdate;
+      }
+
+      function findGiftIndex(idArray) {
+        return idArray.findIndex(id => {
+          return id === giftId;
+        });
       }
 
       function LLAtoECEF(radius, latitude, longitude, alt) {
@@ -120,21 +126,35 @@
         var geometry = new THREE.BufferGeometry();
         var vertices = new Float32Array(gifts.length * 3);
         var colors = new Float32Array(gifts.length * 3);
+        var ids = new Float32Array(gifts.length);
         var color = new THREE.Color(0xff0000);
         gifts.forEach((gift, giftIndex) => {
+          ids[giftIndex] = gift.id;
           var pos = LLAtoECEF(EARTH_RADIUS, gift.lat, gift.lon, 0);
-          verticeIndex = giftIndex * 3;
-          vertices[verticeIndex] = pos.x;
-          vertices[verticeIndex + 1] = pos.y;
-          vertices[verticeIndex + 2] = pos.z;
-          colors[verticeIndex] = color.r;
-          colors[verticeIndex + 1] = color.g;
-          colors[verticeIndex + 2] = color.b;
+          setPositionForGift(vertices, giftIndex, pos);
+          setColorForGift(colors, giftIndex, color);
         });
+        geometry.addAttribute('id', new THREE.BufferAttribute(ids, 1));
         geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
         geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
         var material = new THREE.PointsMaterial({ size: 2, vertexColors: THREE.VertexColors });
-        return new THREE.Points(geometry, material);
+        var mesh = new THREE.Points(geometry, material);
+        mesh.name = 'gifts';
+        return mesh;
+      }
+
+      function setColorForGift(colors, giftIndex, color) {
+        var attrIndex = giftIndex * 3;
+        colors[attrIndex] = color.r;
+        colors[attrIndex + 1] = color.g;
+        colors[attrIndex + 2] = color.b;
+      }
+
+      function setPositionForGift(vertices, giftIndex, pos) {
+        var attrIndex = giftIndex * 3;
+        vertices[attrIndex] = pos.x;
+        vertices[attrIndex + 1] = pos.y;
+        vertices[attrIndex + 2] = pos.z;
       }
     </script>
   </body>
