@@ -22,10 +22,8 @@
       var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
       var renderer = new THREE.WebGLRenderer();
       camera.up.set(0, 0, 1);
-
       var axesHelper = new THREE.AxesHelper(100);
       scene.add(axesHelper);
-
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
@@ -47,7 +45,7 @@
 
       function render() {
         requestAnimationFrame(render);
-        group.rotateOnWorldAxis(new THREE.Vector3(1, 1, 0), 0.01);
+        group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.01);
         renderer.render(scene, camera);
       }
 
@@ -72,8 +70,7 @@
         var segments = 30;
         var rings = 30;
         var geometry = new THREE.SphereGeometry(EARTH_RADIUS, segments, rings);
-        var material = new THREE.MeshBasicMaterial();
-        material.map = new THREE.TextureLoader().load('./earthmap1k.jpg');
+        var material = new THREE.MeshBasicMaterial({ color: 'black' });
         var earthMesh = new THREE.Mesh(geometry, material);
 
         return new THREE.Mesh(geometry, material);
