@@ -1,4 +1,6 @@
 const EARTH_RADIUS = 67.38;
+const KORVATUNTURI_LATIDUDE = 68.073611;
+const KORVATUNTURI_LONGITUDE = 29.315278;
 const visualizationEl = document.getElementById('visualization');
 const visualizationWidth = visualizationEl.getBoundingClientRect().width;
 const scene = new THREE.Scene();
@@ -18,9 +20,9 @@ const controls = new THREE.OrbitControls(camera, visualizationEl);
 const group = new THREE.Group();
 const earthMesh = createEarthMesh();
 const korvatunturiMesh = createKorvatunturiMesh();
-group.add(earthMesh, korvatunturiMesh);
+const santaMesh = createSantaMesh();
 const giftMesh = createGiftMesh(niceList);
-group.add(giftMesh);
+group.add(earthMesh, korvatunturiMesh, santaMesh, giftMesh);
 scene.add(group);
 
 addEventListeners();
@@ -38,7 +40,6 @@ function addEventListeners() {
 
 function render() {
   requestAnimationFrame(render);
-  group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.01);
   controls.update();
   renderer.render(scene, camera);
 }
@@ -52,6 +53,7 @@ function deliverGift(giftId) {
   colorAttribute.needsUpdate = true;
   delivered++;
   updateGiftInfo();
+  santaMesh.position.set(attributes.position.array[giftIndex * 3], attributes.position.array[giftIndex * 3 + 1], attributes.position.array[giftIndex * 3 + 2]);
 }
 
 function resetGiftColors() {
@@ -87,7 +89,11 @@ function createEarthMesh() {
 }
 
 function createKorvatunturiMesh() {
-  return createPointMeshFromCoordinate(30, 0x0000ff, 68.073611, 29.315278);
+  return createPointMeshFromCoordinate(30, 0x0000ff, KORVATUNTURI_LATIDUDE, KORVATUNTURI_LONGITUDE);
+}
+
+function createSantaMesh() {
+  return createPointMeshFromCoordinate(10, 0x00ff00, KORVATUNTURI_LATIDUDE, KORVATUNTURI_LONGITUDE);
 }
 
 function createCubeMeshFromCoordinate(width, height, depth, color, latitude, longitude) {
@@ -217,6 +223,7 @@ function reset() {
   resetGiftColors();
   delivered = 0;
   updateGiftInfo();
+  santaMesh.position.set(korvatunturiMesh.position.x, korvatunturiMesh.position.y, korvatunturiMesh.position.z);
 }
 
 function clearGiftTimeouts() {
