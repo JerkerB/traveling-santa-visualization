@@ -12,7 +12,8 @@ let delivered = 0;
 camera.up.set(0, 0, 1);
 camera.position.z = 300;
 renderer.setSize(visualizationWidth, window.innerHeight);
-document.getElementById('visualization').appendChild(renderer.domElement);
+visualizationEl.appendChild(renderer.domElement);
+const controls = new THREE.OrbitControls(camera, visualizationEl);
 
 const group = new THREE.Group();
 const earthMesh = createEarthMesh();
@@ -38,6 +39,7 @@ function addEventListeners() {
 function render() {
   requestAnimationFrame(render);
   group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), 0.01);
+  controls.update();
   renderer.render(scene, camera);
 }
 
