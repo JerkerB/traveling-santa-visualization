@@ -4,19 +4,12 @@ const visualizationWidth = visualizationEl.getBoundingClientRect().width;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, visualizationWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
-const dropBoxEl = document.getElementById('drop-box');
-dropBoxEl.addEventListener('drop', dropHandler);
-dropBoxEl.addEventListener('dragover', dragOverHandler);
-const runBtnEl = document.getElementById('deliver-btn');
-runBtnEl.addEventListener('click', runVisualization);
-const resetBtnEl = document.getElementById('reset-btn');
-resetBtnEl.addEventListener('click', reset);
+
 const giftTimeouts = [];
 let giftsFromFile = [];
 
 camera.up.set(0, 0, 1);
-const axesHelper = new THREE.AxesHelper(100);
-scene.add(axesHelper);
+camera.position.z = 300;
 renderer.setSize(visualizationWidth, window.innerHeight);
 document.getElementById('visualization').appendChild(renderer.domElement);
 
@@ -28,10 +21,18 @@ const giftMesh = createGiftMesh(niceList);
 group.add(giftMesh);
 scene.add(group);
 
-camera.position.z = 300;
+addEventListeners();
 render();
 
-const rotation = 0.1;
+function addEventListeners() {
+  const dropBoxEl = document.getElementById('drop-box');
+  dropBoxEl.addEventListener('drop', dropHandler);
+  dropBoxEl.addEventListener('dragover', dragOverHandler);
+  const runBtnEl = document.getElementById('deliver-btn');
+  runBtnEl.addEventListener('click', runVisualization);
+  const resetBtnEl = document.getElementById('reset-btn');
+  resetBtnEl.addEventListener('click', reset);
+}
 
 function render() {
   requestAnimationFrame(render);
