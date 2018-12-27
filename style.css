@@ -54,6 +54,12 @@ canvas {
   font-weight: bold;
   border-radius: 5px;
 }
+.btn:hover {
+  background-color: #532c54;
+}
+.btn:active {
+  transform: translateY(4px);
+}
 .deliver-time-container {
   height: 50px;
 }
