@@ -186,7 +186,7 @@ function loadGiftsFromFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const text = e.target.result.trim();
-    giftsFromFile = text.replace(/\r?\n|\r/g, '').split(';');
+    giftsFromFile = text.replace(/\r?\n|\r/g, ';').split(';');
   };
   reader.readAsText(file);
 }
