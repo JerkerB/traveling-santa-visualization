@@ -1,0 +1,10 @@
+{
+  "name": "traveling-santa-visualization",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "harp server --port $PORT"
+  },
+  "dependencies": {
+    "harp": "*"
+  }
+}
