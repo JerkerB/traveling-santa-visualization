@@ -1,4 +1,5 @@
-const EARTH_RADIUS = 67.38;
+const SCALE_FACTOR = 100;
+const EARTH_RADIUS = 6738;
 const KORVATUNTURI_LATIDUDE = 68.073611;
 const KORVATUNTURI_LONGITUDE = 29.315278;
 const visualizationEl = document.getElementById('visualization');
@@ -7,8 +8,11 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, visualizationWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
 
+renderer.setClearColor(0xffffff);
+
 const giftTimeouts = [];
-let giftsFromFile = [];
+let giftBatches = [];
+let giftCount = 0;
 let delivered = 0;
 
 camera.up.set(0, 0, 1);
@@ -20,9 +24,8 @@ const controls = new THREE.OrbitControls(camera, visualizationEl);
 const group = new THREE.Group();
 const earthMesh = createEarthMesh();
 const korvatunturiMesh = createKorvatunturiMesh();
-const santaMesh = createSantaMesh();
 const giftMesh = createGiftMesh(niceList);
-group.add(earthMesh, korvatunturiMesh, santaMesh, giftMesh);
+group.add(earthMesh, korvatunturiMesh, giftMesh);
 scene.add(group);
 
 addEventListeners();
@@ -44,16 +47,15 @@ function render() {
   renderer.render(scene, camera);
 }
 
-function deliverGift(giftId) {
+function deliverGift(giftId, color) {
   const attributes = group.getObjectByName('gifts').geometry.attributes;
   const giftIndex = findGiftIndex(attributes.id.array, giftId);
 
   const colorAttribute = attributes.color;
-  setColorForGift(colorAttribute.array, giftIndex, new THREE.Color(0xffffff));
+  setColorForGift(colorAttribute.array, giftIndex, color);
   colorAttribute.needsUpdate = true;
   delivered++;
   updateGiftInfo();
-  santaMesh.position.set(attributes.position.array[giftIndex * 3], attributes.position.array[giftIndex * 3 + 1], attributes.position.array[giftIndex * 3 + 2]);
 }
 
 function resetGiftColors() {
@@ -71,29 +73,29 @@ function findGiftIndex(idArray, giftId) {
 }
 
 function LLAtoECEF(radius, latitude, longitude, alt) {
+  radius /= SCALE_FACTOR;
+  latitude /= SCALE_FACTOR;
+  longitude /= SCALE_FACTOR;
+  alt /= SCALE_FACTOR;
   const flattening = 0;
   const latitudeAtMeanSeaLevel = Math.atan(Math.pow(1 - flattening, 2) * Math.tan(latitude));
   const x = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.cos(longitude) + alt * Math.cos(latitude) * Math.cos(longitude);
   const y = radius * Math.cos(latitudeAtMeanSeaLevel) * Math.sin(longitude) + alt * Math.cos(latitude) * Math.sin(longitude);
   const z = radius * Math.sin(latitudeAtMeanSeaLevel) + alt * Math.sin(latitude);
-  return new THREE.Vector3(-x, -z, -y);
+  return new THREE.Vector3(x, y, z);
 }
 
 function createEarthMesh() {
   const segments = 30;
   const rings = 30;
-  const geometry = new THREE.SphereGeometry(EARTH_RADIUS, segments, rings);
+  const geometry = new THREE.SphereGeometry(EARTH_RADIUS / SCALE_FACTOR, segments, rings);
   const material = new THREE.MeshBasicMaterial({ color: 'black' });
 
   return new THREE.Mesh(geometry, material);
 }
 
 function createKorvatunturiMesh() {
-  return createPointMeshFromCoordinate(30, 0x0000ff, KORVATUNTURI_LATIDUDE, KORVATUNTURI_LONGITUDE);
-}
-
-function createSantaMesh() {
-  return createPointMeshFromCoordinate(10, 0x00ff00, KORVATUNTURI_LATIDUDE, KORVATUNTURI_LONGITUDE);
+  return createPointMeshFromCoordinate(10, 0x0000ff, KORVATUNTURI_LATIDUDE, KORVATUNTURI_LONGITUDE);
 }
 
 function createCubeMeshFromCoordinate(width, height, depth, color, latitude, longitude) {
@@ -145,7 +147,7 @@ function createGiftMesh(gifts) {
   geometry.addAttribute('id', new THREE.BufferAttribute(ids, 1));
   geometry.addAttribute('position', new THREE.BufferAttribute(vertices, 3));
   geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
-  const material = new THREE.PointsMaterial({ size: 2, vertexColors: THREE.VertexColors });
+  const material = new THREE.PointsMaterial({ size: 1, vertexColors: THREE.VertexColors });
   const mesh = new THREE.Points(geometry, material);
   mesh.name = 'gifts';
   return mesh;
@@ -175,7 +177,7 @@ function dropHandler(e) {
   e.preventDefault();
   const file = getFileFromEvent(e);
   document.getElementById('drop-box-text').innerHTML = file.name;
-  giftsFromFile = loadGiftsFromFile(file);
+  loadGiftsFromFile(file);
   removeDragData(e);
 }
 
@@ -197,24 +199,31 @@ function loadGiftsFromFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const text = e.target.result.trim();
-    giftsFromFile = text.replace(/\r?\n|\r/g, ';').split(';');
+    giftCount = text.replace(/\r?\n|\r/g, ';').split(';').length;
+    giftBatches = text.split(/\r?\n/);
     updateGiftInfo();
   };
   reader.readAsText(file);
 }
 
 function updateGiftInfo() {
-  document.getElementById('gift-count').innerHTML = `${delivered}/${giftsFromFile.length}`;
+  document.getElementById('gift-count').innerHTML = `${delivered}/${giftCount}`;
 }
 
 function runVisualization() {
   const timePerGift = document.getElementById('deliver-time-input').value;
-  giftsFromFile.forEach((gift, index) => {
-    giftTimeouts.push(
-      setTimeout(() => {
-        deliverGift(parseInt(gift));
-      }, timePerGift * index)
-    );
+  let giftIndex = 0;
+  giftBatches.forEach((batch, batchIndex) => {
+    const batchColor = randomColor();
+    gifts = batch.split(';');
+    gifts.forEach((gift) => {
+      giftIndex++;
+      giftTimeouts.push(
+        setTimeout(() => {
+          deliverGift(parseInt(gift), batchColor);
+        }, timePerGift * giftIndex)
+      );
+    });
   });
 }
 
@@ -223,11 +232,15 @@ function reset() {
   resetGiftColors();
   delivered = 0;
   updateGiftInfo();
-  santaMesh.position.set(korvatunturiMesh.position.x, korvatunturiMesh.position.y, korvatunturiMesh.position.z);
 }
 
 function clearGiftTimeouts() {
   giftTimeouts.forEach(timeout => {
     clearTimeout(timeout);
   });
+}
+
+function randomColor() {
+  const randomHex = "#" + Math.random().toString(16).slice(2, 8);
+  return new THREE.Color(new THREE.Color(randomHex));
 }
