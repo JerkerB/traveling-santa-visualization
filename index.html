@@ -92,6 +92,7 @@
       <div id="visualization"></div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
+    <script src="nicelist.js"></script>
     <script>
       var dropBoxEl = document.getElementById('drop-box');
       dropBoxEl.addEventListener('drop', dropHandler);
@@ -172,17 +173,13 @@
       scene.add(axesHelper);
       renderer.setSize(visualizationWidth, window.innerHeight);
       document.getElementById('visualization').appendChild(renderer.domElement);
-      var giftsFromNiceList = [];
 
       var group = new THREE.Group();
       var earthMesh = createEarthMesh();
       var korvatunturiMesh = createKorvatunturiMesh();
       group.add(earthMesh, korvatunturiMesh);
-      getGifstFromNiceList().then(gifts => {
-        giftsFromNiceList = gifts;
-        mesh = createGiftMesh(gifts);
-        group.add(mesh);
-      });
+      var giftMesh =  createGiftMesh(niceList);
+      group.add(giftMesh);
       scene.add(group);
 
       camera.position.z = 300;
@@ -209,7 +206,7 @@
         var attributes = group.getObjectByName('gifts').geometry.attributes;
         var colorAttribute = attributes.color;
         var color = new THREE.Color(0xff0000);
-        giftsFromNiceList.forEach((gift, index) => {
+        niceList.forEach((gift, index) => {
           setColorForGift(colorAttribute.array, index, color);
         });
         colorAttribute.needsUpdate = true;
