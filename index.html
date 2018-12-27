@@ -1,24 +1,40 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Traveling santa visualization</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-  </head>
-  <body>
-    <div class="header"><h1>Traveling santa - visualization</h1></div>
-    <div class="flex-container">
-      <div class="controls">
-        <h2>Controls</h2>
-        <div id="drop-box"><h3 id="drop-box-text">Drag and drop your file here...</h3></div>
-        <div class="control-inputs"></div>
-        <div class="deliver-time-container"><label for="deliver-time-input">Deliver time in ms/gift</label> <input type="text" id="deliver-time-input" /></div>
-        <div class="btn-container"><button class="btn" id="deliver-btn">Deliver</button> <button class="btn" id="reset-btn">Reset</button></div>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Traveling santa visualization</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+  <div class="header">
+    <h1>Traveling santa - visualization</h1>
+  </div>
+  <div class="flex-container">
+    <div class="controls">
+      <h2>Controls</h2>
+      <div id="drop-box">
+        <h3 id="drop-box-text">Drag and drop your file here...</h3>
       </div>
-      <div id="visualization"></div>
+      <div class="control-inputs"></div>
+      <div class="deliver-time-container">
+        <label for="deliver-time-input">Deliver time in ms/gift</label>
+        <input type="text" id="deliver-time-input" />
+      </div>
+      <div class="info-container">Gifts delivered
+        <span id="gift-count">0/0</span>
+      </div>
+      <div class="btn-container">
+        <button class="btn" id="deliver-btn">Deliver</button>
+        <button class="btn" id="reset-btn">Reset</button>
+      </div>
     </div>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
-    <script type="text/javascript" src="nicelist.js"></script>
-    <script type="text/javascript" src="santa.js"></script>
-  </body>
+    <div id="visualization"></div>
+  </div>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/99/three.min.js"></script>
+  <script type="text/javascript" src="nicelist.js"></script>
+  <script type="text/javascript" src="santa.js"></script>
+</body>
+
 </html>

@@ -24,6 +24,7 @@ canvas {
   flex-direction: column;
   text-align: center;
   color: #89538a;
+  margin: 10px;
 }
 #visualization {
   flex: 3;
@@ -32,7 +33,6 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px;
   height: 200px;
   border-width: 5px;
   border-style: dashed;
@@ -40,7 +40,6 @@ canvas {
 .btn-container {
   display: flex;
   justify-content: space-between;
-  margin: 10px;
 }
 .btn {
   margin: 10px;
@@ -60,8 +59,9 @@ canvas {
 .btn:active {
   transform: translateY(4px);
 }
-.deliver-time-container {
-  height: 50px;
+.deliver-time-container, .info-container {
+  text-align: left;
+  padding: 15px;
 }
 #deliver-time-input {
   border: none;

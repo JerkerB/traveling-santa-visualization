@@ -7,6 +7,7 @@ const renderer = new THREE.WebGLRenderer();
 
 const giftTimeouts = [];
 let giftsFromFile = [];
+let delivered = 0;
 
 camera.up.set(0, 0, 1);
 camera.position.z = 300;
@@ -47,6 +48,8 @@ function deliverGift(giftId) {
   const colorAttribute = attributes.color;
   setColorForGift(colorAttribute.array, giftIndex, new THREE.Color(0xffffff));
   colorAttribute.needsUpdate = true;
+  delivered++;
+  updateGiftInfo();
 }
 
 function resetGiftColors() {
@@ -187,8 +190,13 @@ function loadGiftsFromFile(file) {
   reader.onload = e => {
     const text = e.target.result.trim();
     giftsFromFile = text.replace(/\r?\n|\r/g, ';').split(';');
+    updateGiftInfo();
   };
   reader.readAsText(file);
+}
+
+function updateGiftInfo() {
+  document.getElementById('gift-count').innerHTML = `${delivered}/${giftsFromFile.length}`;
 }
 
 function runVisualization() {
@@ -205,6 +213,8 @@ function runVisualization() {
 function reset() {
   clearGiftTimeouts();
   resetGiftColors();
+  delivered = 0;
+  updateGiftInfo();
 }
 
 function clearGiftTimeouts() {
